@@ -1,0 +1,266 @@
+KSets:=function(n,k) 
+local c,L,M,l,i,j;
+c:=1;;
+L:=[];;
+M:=[];;
+if k=1 then;
+for l in [0..n-1] do;
+L[l+1]:=[l];
+od;
+return L;
+else;
+for j in KSets(n,k-1) do;
+for i in [0..n-1] do;
+if (i in j)=false then;
+M[c]:=Set(Concatenation(j,[i]));
+c:=c+1;
+fi;
+od;
+od;
+return Set(M);
+fi;
+end;
+
+PerfectDifference:=function(n)
+local p,Checking,Candidates,A,i,j,PDS,bool;
+p:=(n-1)^2+n;
+PDS:=[];
+Candidates:=KSets(p,n);
+for A in Candidates do;
+bool:=1;
+Checking:=ShallowCopy(Zero([1..p-1]));
+for i in A do;
+for j in A do;
+if i<>j then;
+Checking[PowerModInt(i-j,1,p)]:=Checking[PowerModInt(i-j,1,p)]+1;
+fi;
+od;od;
+for i in [1..Length(Checking)] do;
+if Checking[i]<>1 then;
+bool:=0;
+fi;
+od;
+if bool=1 then;
+PDS:=Concatenation(PDS,[A]);
+fi;
+od;
+return PDS;
+end;
+
+PDSProjective:=function(S) #Generates a projective plane from a perfect difference set
+local Points,Lines,n;
+n:=Length(S);
+Points:=(n-1)^2+n;
+Lines:=[];
+for i in [1..(n-1)^2+n] do;
+Lines[i]:=[];
+od;
+for i in [0..(n-1)^2+n-1] do;
+for j in [0..(n-1)^2+n-1] do;
+if PowerModInt(i+j,1,(n-1)^2+n) in S then;
+Append(Lines[i+1],[j]);
+fi;
+od;od;
+return Lines;
+end;
+
+OrdernProjective:=function(n)#Gives projective plane with order n-1
+local S,Points,Lines;
+S:=PerfectDifference(n)[1];
+Points:=(n-1)^2+n;
+Lines:=[];
+for i in [1..(n-1)^2+n] do;
+Lines[i]:=[];
+od;
+for i in [0..(n-1)^2+n-1] do;
+for j in [0..(n-1)^2+n-1] do;
+if PowerModInt(i+j,1,(n-1)^2+n) in S then;
+Append(Lines[i+1],[j]);
+fi;
+od;od;
+return Lines;
+end;
+
+Affine:=function(P) #gives an affine plane when a projective plane is input
+local linfty,Affine,i;
+linfty:=P[Length(P)];
+Affine:=[];
+for i in [1..Length(P)-1] do;
+Affine[i]:=SetMinus(P[i],linfty);
+od;
+return Affine;
+end;
+
+SetMinus:=function(n,m)
+local d,i,c;
+c:=1;
+d:=[];
+for i in n do;
+if i in m then;
+else;
+d[c]:=i;
+c:=c+1;
+fi;
+od;
+return d;
+end;
+
+SetUnion:=function(U,V)
+local S;
+S:=Set(Concatenation(U,V));
+return S;
+end;
+
+FamilyUnion:=function(F)
+local S,i;
+S:=[];
+for i in [1..Length(F)] do;
+S:=Set(Concatenation(S,F[i]));
+od;
+return S;
+end;
+
+SetIntersection:=function(U,V)
+local c,I,i;
+I:=[];
+c:=1;
+for i in Set(U) do;
+if i in Set(V) then;
+I[c]:=i;
+c:=c+1;
+fi;
+od;
+return Set(I);
+end;
+
+ParallelClasses:=function(A)
+local L,P,c,q,d,i;
+c:=1;
+q:=Length(A[1]);
+P:=[];
+for i in [1..q+1] do;
+P:=Concatenation(P,[[]]);
+od;
+while c<q+2 do;
+d:=1;
+for i in [1..Length(A)] do;
+if SetIntersection(A[i],A[c])=[] then;
+P[c][d]:=A[i];
+d:=d+1;
+elif Length(SetIntersection(A[i],A[c]))=Length(A[i]) then;
+P[c][d]:=A[i];
+d:=d+1;
+fi;
+od;
+c:=c+1;
+od;
+return P;
+end;
+
+Projective:=function(A)
+local q,c,P,Max,S,pinfty,i,l,Parallel;
+S:=FamilyUnion(A);
+P:=[];
+c:=1;
+Parallel:=ParallelClasses(A);
+q:=Length(Parallel[1]);
+Max:=S[Length(S)];
+pinfty:=[Max+1..Max+Length(ParallelClasses(A))];
+for i in [1..Length(pinfty)] do;
+for l in Parallel[i] do;
+P[c]:=Concatenation(l,[pinfty[i]]);
+c:=c+1;
+od;od;
+return SetUnion(P,[pinfty]);
+end;
+
+LineIntersect:=function(l1,l2)
+if SetIntersection(l1,l2)=[] then;
+return false;
+else;
+return true;
+fi;
+end;
+
+I:=LineIntersect;
+
+Subset:=function(U,V)
+local bool;
+bool:=1;
+for i in U do;
+if (i in V)=false then;
+bool:=0;
+fi;
+od;
+if bool=1 then; return true;
+else; return false;
+fi;
+end;
+
+LineThrough:=function(P,Q,Proj)
+local c,bool,Line;
+bool:=0;
+c:=1;
+while bool=0 do;
+if Subset([P,Q],Proj[c]) then;
+Line:=Proj[c];
+bool:=1;
+else; c:=c+1; fi;
+od;
+return Line;
+end;
+
+
+ProjectiveSpan:=function(S,Proj)
+local Subspace,bool,c,U,i;
+S:=Set(S);
+c:=1;
+bool:=0;
+U:=[];
+Subspace:=[];
+if Length(S)=2 then;
+Subspace:=LineThrough(S[1],S[2],Proj);
+else;
+for i in [1..Length(S)-1] do;
+U[i]:=S[i];
+od;
+for i in ProjectiveSpan(U,Proj) do;
+Subspace:=SetUnion(Subspace,LineThrough(i,S[Length(S)],Proj));
+od;
+fi;
+return Subspace;
+end;
+
+ProjectiveDimension:=function(Proj) #not functional WIP
+local i,dimension,bool,c;
+dimension:=1;
+bool:=0;
+c:=2;
+while bool=0 do;
+if Length(ProjectiveSpan([1..c],Proj))=Length(FamilyUnion(Proj)) then;N
+Print("this case happened");
+bool:=1;
+else;
+dimension:=dimension+1;
+fi;
+od;
+return dimension;
+end;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
