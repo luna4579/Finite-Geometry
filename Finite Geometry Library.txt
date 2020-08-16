@@ -247,7 +247,25 @@ od;
 return dimension;
 end;
 
+ProjFromVec:=function(V) #Where V is a vector space
+local Points,Lines,Proj;
+Points:=[];
+Lines:=[];
+for i in V do;
+Points:=SetUnion([Subspace(V,[i])],Points);
+od;
 
+for i in V do;
+for j in V do;
+if i=j then;
+else;
+Lines:=SetUnion(Lines,[Subspace(V,[i,j])]);
+fi;
+od;od;
+
+Proj:=[Points,Lines];
+return Proj;
+end;
 
 
 
