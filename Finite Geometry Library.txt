@@ -252,14 +252,14 @@ local Points,Lines,Proj;
 Points:=[];
 Lines:=[];
 for i in V do;
-Points:=SetUnion([Subspace(V,[i])],Points);
+Points:=SetUnion([List(Subspace(V,[i]))],Points);
 od;
 
 for i in V do;
 for j in V do;
 if i=j then;
 else;
-Lines:=SetUnion(Lines,[Subspace(V,[i,j])]);
+Lines:=SetUnion(Lines,[List(Subspace(V,[i,j]))]);
 fi;
 od;od;
 
